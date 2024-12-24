@@ -2,7 +2,7 @@ import Window from '../../src/window/Window.js';
 import XMLSerializer from '../../src/xml-serializer/XMLSerializer.js';
 import DOMParser from '../../src/dom-parser/DOMParser.js';
 import DOMParserHTML from './data/DOMParserHTML.js';
-import { beforeEach, describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, assert } from 'vitest';
 import DOMParserSVG from './data/DOMParserSVG';
 
 describe('DOMParser', () => {
@@ -103,6 +103,33 @@ describe('DOMParser', () => {
 			expect(new XMLSerializer().serializeToString(newDocument).replace(/[\s]/gm, '')).toBe(
 				DOMParserSVG.replace(/[\s]/gm, '')
 			);
+		});
+
+		it('parses IFrame', () => {
+			let newDocument: ReturnType<DOMParser['parseFromString']> | undefined;
+
+			try {
+				newDocument = domParser.parseFromString(
+					`<iframe src="http://localhost/"></iframe>`,
+					'text/html'
+				);
+			} catch (error) {
+				assert.fail(error);
+			}
+			expect(newDocument).toBeDefined();
+
+			expect(new XMLSerializer().serializeToString(newDocument).replace(/\s/g, '')).toBe(
+				`<html>
+					<head></head>
+					<body>
+						<iframe src="http://localhost/"></iframe>
+					</body>
+				</html>`.replace(/\s/g, '')
+			);
+
+			const iframe = newDocument.querySelector('iframe');
+			expect(iframe).toBeTruthy();
+			expect(iframe?.src).toEqual('http://localhost/');
 		});
 	});
 });
